@@ -1,12 +1,12 @@
 #ifndef GRAPHNODE_H
 #define GRAPHNODE_H
 
-class GraphNode
+template <class T> class GraphNode
 {
 private:
     int id; /// unique identifier
-    GraphValue value; /// original node value
-    GraphValue modifiedValue; /// modified node value
+    T value; /// original node value
+    T modifiedValue; /// modified node value
 
     GraphAttributes attributes; ///attributes of the node
 
