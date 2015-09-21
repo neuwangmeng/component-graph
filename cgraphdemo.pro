@@ -39,7 +39,10 @@ SOURCES += \
     GUI/moc_dialogimpulsenoise.cpp \
     GUI/moc_dialogNoise.cpp \
     GUI/moc_mainwindow.cpp \
-    GUI/noise.cpp
+    GUI/noise.cpp \
+    graphnode.cpp \
+    graphattributes.cpp \
+    graphvalue.cpp
 
 HEADERS += \
     OrderedQueue.h \
@@ -64,7 +67,10 @@ HEADERS += \
     GUI/ui_dialogimpulsenoise.h \
     GUI/ui_dialogNoise.h \
     GUI/ui_mainwindow.h \
-    FlatSE.hxx
+    FlatSE.hxx \
+    graphnode.h \
+    graphattributes.h \
+    graphvalue.h
 
 SUBDIRS += \
     GUI/cgraph.pro \
