@@ -107,7 +107,7 @@ int CGraph<T>::computeGraph() {
     }
 
     // index from flat-zone id to corresponding node
-    vector <GraphNode<T> *> regionToNode(rag->getSize(),0);
+    vector <GraphNode<T> *> regionToNode(rag->getSize(),(GraphNode<T>*)(0) );
     std::queue<int> fifo;
     std::vector<bool> infifo(regionToNode.size(), false);
 
@@ -200,7 +200,7 @@ int CGraph<T>::computeGraph() {
 
     T value(0);
 
-    root=new GraphNode<T>(-1,value,imSource.getBufSize());
+    root=new GraphNode<T>(-1,value);
 
         for (int i=0; i<graph.size(); i++) {
 
@@ -579,10 +579,10 @@ bool CGraph<RGB>::isEqual(GraphNode<RGB> *n, GraphNode<RGB> *m) {
     if(getArea(n)==getArea(m)) return false;
 
     for(int i=0; i<n->pixels.size(); i++) {
-        TOffset curPixel=n->pixels[i];
+        TOffset curPixel=this->imSource.getOffset(n->pixels[i]);
         bool curPixelIncluded=false;
         for(int j=0; j<m->pixels.size(); j++) {
-            if(curPixel==m->pixels[j])
+            if(curPixel==this->imSource.getOffset(m->pixels[j]))
                 {
                 curPixelIncluded=true;
                 }

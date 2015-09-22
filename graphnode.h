@@ -12,7 +12,7 @@ public:
 
     std::vector<GraphNode *> childs; /// list of direct descendants
     std::vector<GraphNode *> fathers; /// list of direct ascendants
-    std::vector<int> pixels; /// list of pixels offsets belonging to the node
+    std::vector<Point<TCoord> > pixels; /// list of pixels offsets belonging to the node
 
 
     // list of flat-zones belonging to node and having same value
