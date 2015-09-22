@@ -55,7 +55,8 @@ int main(int argc, char *argv[])
     Image <RGB> imSrc;
 
     // Declaration of :
-    // -connexity (8-adjacency)
+    // -connexity: 26-adjacency
+    // compatible with 2D (8-connexity) and 3D images
     FlatSE connexity;
     connexity.make3DN26();
 
@@ -65,10 +66,16 @@ int main(int argc, char *argv[])
     int areaMin=atoi(argv[2]);
     int contrastMin=atoi(argv[3]);
 
-    CGraph *cgraph=new CGraph(imSrc,connexity);
+    std::vector<GraphAttributes> attributes;
+    attributes.push_back(GraphAttributes::Area);
+    attributes.push_back(GraphAttributes::Contrast);
+
+    CGraph<RGB> *cgraph=new CGraph(imSrc,connexity,attributes);
+
 
     // Track computation progress
     graphWatcher *myWatcher=new graphWatcher(imSrc.getBufSize());
+    cgraph->addWatcher(myWatcher);
     // Set marginal ordering on RGB colour space
     ColorMarginalOrdering  *order=new ColorMarginalOrdering();
     // Compute \ddot component-graph

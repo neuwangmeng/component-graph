@@ -127,7 +127,7 @@ int CGraph<T>::computeGraph(ColorOrdering *order, CGraphWatcher *watcher) {
             watcher->progressUpdate();
             }
         if(regionToNode[i]==0) {
-            /** i is a canonical region (i==regionToNode[i]->index- */
+            /** i is a canonical region (i==regionToNode[i]->index) */
             RAGraph::Vertex *curVertex=rag->nodes[i];
             GraphNode *curNode=new GraphNode(curVertex->index,curVertex->color,curVertex->pixels.size());
 
@@ -167,30 +167,25 @@ int CGraph<T>::computeGraph(ColorOrdering *order, CGraphWatcher *watcher) {
                             valueMax=std::max(valueMax,tmp->color[0]+tmp->color[1]+tmp->color[2]);
 
                             assert(tmp!=0);
-                            //if(tmp!=0) {
-                                bool isChild=true;
-                                for(int a=0; a<tmp->fathers.size(); a++) {
-                                    if(order->islessequal( curNode->color , tmp->fathers[a]->color) ) {
-                                        isChild=false;
-                                        break;
-                                    }
+                            bool isChild=true;
+                            for(int a=0; a<tmp->fathers.size(); a++) {
+                                if(order->islessequal( curNode->color , tmp->fathers[a]->color) ) {
+                                    isChild=false;
+                                    break;
                                 }
-                                if(isChild) {
-                                    curNode->childs.push_back(tmp);
-                                    tmp->fathers.push_back(curNode);
-
-                                }
+                            }
+                            if(isChild) {
+                                curNode->childs.push_back(tmp);
+                                tmp->fathers.push_back(curNode);
 
                             }
-
+                        }
                         curNode->area+=rag->nodes[nb]->pixels.size();
                         curNode->contrast=valueMax-(curNode->color[0]+curNode->color[1]+curNode->color[2]);
                         fifo.push(nb);
                         infifo[nb]=true;
                     }
                 }
-
-
             }
             processed[i]=true;
         }
