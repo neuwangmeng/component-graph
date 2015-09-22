@@ -18,7 +18,7 @@
 #include "ragraph.h"
 #include "graphnode.h"
 #include "cgraphwatcher.h"
-#include "colorordering.h"
+#include "ordering.h"
 
 using namespace LibTIM;
 using namespace std;
@@ -39,6 +39,7 @@ private:
     RAGraph<T> *rag; /*!< Region adjacency graph on which is computed the component-graph */
     Image<T> imSource; /*! Source image (2D or 3D) */
     FlatSE connexity;   /*!< Underlying connexity (2D: 4- 8-  or 3D : 6- 18- 26-) */
+    Ordering <T> *order; /*!<Ordering used for type T */
 
     /** Track computation progress **/
     CGraphWatcher *graphWatcher;
@@ -51,7 +52,7 @@ private:
 
 public:
 
-    CGraph(Image <RGB> &imSource, FlatSE &connexity, std::vector<GraphAttributes> listOfAttributes) : graphWatcher(0) {
+    CGraph(Image <RGB> &imSource, FlatSE &connexity, std::vector<GraphAttributes> listOfAttributes, Ordering<T> *order) : graphWatcher(0) {
         this->imSource=imSource;
         this->connexity=connexity;
         this->rag=new RAGraph<T>(imSource,connexity);
@@ -59,6 +60,7 @@ public:
             std::vector<int> v;
             this->attributes[listOfAttributes[i]]=v;
         }
+        this->order=order;
     }
 
     CGraph(RAGraph<T> *rag) : rag(rag) {}
@@ -69,9 +71,9 @@ public:
     }
 
     /** Component-graph \ddot G **/
-    int computeGraph(ColorOrdering *order);
+    int computeGraph();
     /** Component-graph G **/
-    int computeGraphFull(ColorOrdering *order);
+    int computeGraphFull();
 
     /** Return synthetic images */
     static Image<RGB> syntheticImage();
@@ -83,23 +85,23 @@ public:
     void areaFiltering(int areaMin);
     void reconstructMin();
 
-    Image<RGB> constructImage(ColorOrdering *order);
+    Image<RGB> constructImage();
 
     /** Helper functions **/
-    vector<GraphNode<T> *> computeComponents(ColorOrdering *order, OrderedQueue<RGB> &pq);
-    static bool notComparable(Image<RGB> &im, Point<TCoord> &p, Point<TCoord> &q);
+    vector<GraphNode<T> *> computeComponents(OrderedQueue<RGB> &pq);
+    static bool notComparable(Image<T> &im, Point<TCoord> &p, Point<TCoord> &q);
 
     bool isEqual(GraphNode<T> *n, GraphNode<T> *m);
     bool isIncluded(GraphNode<T> *n, GraphNode<T> *m);
     bool isIncludedFast(GraphNode<T> *n, GraphNode<T> *m, vector<bool> &tmp);
-    void computeLinks(ColorOrdering *order, vector<GraphNode<T> *> &nodes);
+    void computeLinks(vector<GraphNode<T> *> &nodes);
     GraphNode<T> *addRoot(vector<GraphNode<T> *> &nodes);
-    vector<GraphNode<T> *> minimalElements(ColorOrdering *order, vector<GraphNode<T> *> &nodes, vector<bool> &tmp);
-    void computeTransitiveReduction(ColorOrdering *order, vector<GraphNode<T> *> &nodes);
+    vector<GraphNode<T> *> minimalElements(vector<GraphNode<T> *> &nodes, vector<bool> &tmp);
+    void computeTransitiveReduction( vector<GraphNode<T> *> &nodes);
 
     Image<RGB> constructImageInf();
     void areaFiltering(int areaMin, int areaMax);
-    bool isLTE(RGB &v, RGB &w);
+    bool isLTE(T &v, T &w);
 
     void contrastFiltering(int contrastMin);
     void contrastFiltering(int contrastMin, int contrastMax);
@@ -116,6 +118,15 @@ private:
 
     vector<GraphNode<T> *> computeComponents(Image<RGB> &im, FlatSE &connexity);
 
+    int getArea(GraphNode <T> *node) {return attributes[GraphAttributes::Area][node->id];}
+    int getContrast(GraphNode <T> *node) {return attributes[GraphAttributes::Contrast][node->id];}
+    int getVolume(GraphNode <T> *node) {return attributes[GraphAttributes::Volume][node->id];}
+    int getCompacity(GraphNode <T> *node) {return attributes[GraphAttributes::Compacity][node->id];}
+
+
+
 };
+
+#include "cgraph.hxx"
 
 #endif // CGRAPH_H

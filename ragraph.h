@@ -61,8 +61,8 @@ private:
     FlatSE connexity;
     Image <TLabel> imFlatZones;
     std::vector <Vertex *> nodes;
-
-    void addBorders(Image<T> &im, const TCoord *preWidth, const TCoord *postWidth, T value)
+    template <class U>
+    void addBorders(Image<U> &im, const TCoord *preWidth, const TCoord *postWidth, U value)
     {
         TSize newSize[3];
         const TSize *oriSize = im.getSize();
@@ -72,10 +72,10 @@ private:
             newSize[i] = oriSize[i] + preWidth[i] + postWidth[i];
         }
 
-        Image<T> temp(newSize);
+        Image<U> temp(newSize);
 
-        typename Image<T>::iterator it;
-        typename Image<T>::iterator end=temp.end();
+        typename Image<U>::iterator it;
+        typename Image<U>::iterator end=temp.end();
 
         std::fill(temp.begin(), end,value);
         temp.copy(im, preWidth[0],preWidth[1],preWidth[2]);
@@ -100,10 +100,13 @@ public :
     int getSize() {return nodes.size();}
     T getValue(int i) {return nodes[i]->value;}
     std::vector<Point<TCoord> > getPixels(int i) {return nodes[i]->pixels;}
-
+    int getIndex(int i) {return nodes[i]->index; }
+    std::vector<int> getAllNb(int i) {return nodes[i]->allNb;}
 
     void writeDot(const char *fileName);
     void print();
 };
+
+#include "ragraph.hxx"
 
 #endif // RAGRAPH_H

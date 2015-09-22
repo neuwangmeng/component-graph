@@ -11,7 +11,7 @@
 
 #include "cgraph.h"
 #include "cgraphwatcher.h"
-#include "colorordering.h"
+#include "ordering.h"
 
 using namespace std;
 
@@ -70,16 +70,16 @@ int main(int argc, char *argv[])
     attributes.push_back(GraphAttributes::Area);
     attributes.push_back(GraphAttributes::Contrast);
 
-    CGraph<RGB> *cgraph=new CGraph(imSrc,connexity,attributes);
+    ColorMarginalOrdering  *order=new ColorMarginalOrdering();
 
+    CGraph<RGB> *cgraph=new CGraph<RGB>(imSrc,connexity,attributes,order);
 
     // Track computation progress
     graphWatcher *myWatcher=new graphWatcher(imSrc.getBufSize());
     cgraph->addWatcher(myWatcher);
     // Set marginal ordering on RGB colour space
-    ColorMarginalOrdering  *order=new ColorMarginalOrdering();
     // Compute \ddot component-graph
-    cgraph->computeGraph(order,myWatcher);
+    cgraph->computeGraph();
 
     // Area and contrast filtering
     cgraph->areaFiltering(areaMin);
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     cgraph->writeDot("cgraph.dot");
 
     // Compute resulting image
-    Image<RGB> result=cgraph->constructImage(order);
+    Image<RGB> result=cgraph->constructImage();
     // Save result in ppm format
     result.save("result.ppm");
 
