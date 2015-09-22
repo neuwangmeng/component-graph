@@ -36,42 +36,42 @@ enum class GraphAttributes {
 template <class T> class CGraph
 {
 private:
-    RAGraph *rag; /*!< Region adjacency graph on which is computed the component-graph */
-
-    Image<RGB> imSource; /*! Source image (2D or 3D) */
+    RAGraph<T> *rag; /*!< Region adjacency graph on which is computed the component-graph */
+    Image<T> imSource; /*! Source image (2D or 3D) */
     FlatSE connexity;   /*!< Underlying connexity (2D: 4- 8-  or 3D : 6- 18- 26-) */
 
+    /** Track computation progress **/
+    CGraphWatcher *graphWatcher;
     /** Container of the nodes of the (directed) graph **/
     std::vector<GraphNode<T> *> graph;
-    /** Attributes computed in the graph **/
-    std::map<GraphAttributes,bool> usedAttributes;
     /** Attributes of the nodes **/
     std::map<GraphAttributes,std::vector<int> > attributes;
     /** Root of the graph **/
-    GraphNode *root;
+    GraphNode<T> *root;
 
 public:
 
-    CGraph(Image <RGB> &imSource, FlatSE &connexity, std::vector<GraphAttributes> listOfAttributes) {
+    CGraph(Image <RGB> &imSource, FlatSE &connexity, std::vector<GraphAttributes> listOfAttributes) : graphWatcher(0) {
         this->imSource=imSource;
         this->connexity=connexity;
-        this->rag=new RAGraph(imSource,connexity);
-
+        this->rag=new RAGraph<T>(imSource,connexity);
         for(int i=0; i<listOfAttributes.size(); i++) {
             std::vector<int> v;
             this->attributes[listOfAttributes[i]]=v;
         }
     }
 
-    CGraph(RAGraph *rag) : rag(rag) {}
+    CGraph(RAGraph<T> *rag) : rag(rag) {}
     ~CGraph() { delete rag;}
 
-    Node *componentGraphNaive(FlatSE &connexity);
+    void addWatcher(CGraphWatcher *graphWatcher) {
+        this->graphWatcher=graphWatcher;
+    }
 
     /** Component-graph \ddot G **/
-    int computeGraph(ColorOrdering *order, CGraphWatcher *watcher);
+    int computeGraph(ColorOrdering *order);
     /** Component-graph G **/
-    int computeGraphFull(ColorOrdering *order, CGraphWatcher *watcher);
+    int computeGraphFull(ColorOrdering *order);
 
     /** Return synthetic images */
     static Image<RGB> syntheticImage();
@@ -92,16 +92,14 @@ public:
     bool isEqual(GraphNode<T> *n, GraphNode<T> *m);
     bool isIncluded(GraphNode<T> *n, GraphNode<T> *m);
     bool isIncludedFast(GraphNode<T> *n, GraphNode<T> *m, vector<bool> &tmp);
-    void computeLinks(ColorOrdering *order, vector<Node *> &nodes);
+    void computeLinks(ColorOrdering *order, vector<GraphNode<T> *> &nodes);
     GraphNode<T> *addRoot(vector<GraphNode<T> *> &nodes);
     vector<GraphNode<T> *> minimalElements(ColorOrdering *order, vector<GraphNode<T> *> &nodes, vector<bool> &tmp);
     void computeTransitiveReduction(ColorOrdering *order, vector<GraphNode<T> *> &nodes);
 
-    int computeGraphInverse(CGraphWatcher *watcher);
     Image<RGB> constructImageInf();
     void areaFiltering(int areaMin, int areaMax);
     bool isLTE(RGB &v, RGB &w);
-    Image<RGB> constructImageInverse();
 
     void contrastFiltering(int contrastMin);
     void contrastFiltering(int contrastMin, int contrastMax);

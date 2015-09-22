@@ -17,17 +17,14 @@ using namespace LibTIM;
 
 /** Region adjacency graph **/
 
+template <class T>
 class RAGraph {
 
-    Image <RGB> imSource;
-    FlatSE connexity;
-    Image <TLabel> imFlatZones;
-
-public :
+private:
     struct Vertex {
         int index;
 
-        RGB color;
+        T value;
 
         std::vector <int> compNb;
         std::vector <int> nonCompNb;
@@ -40,7 +37,6 @@ public :
         }
 
         Vertex() {
-
         }
 
         void insertCompNb(int index) {
@@ -61,10 +57,12 @@ public :
         }
     };
 
-    template <class T> void addBorders(Image<T> &im,
-                                       const TCoord *preWidth,
-                                       const TCoord *postWidth,
-                                       T value)
+    Image <T> imSource;
+    FlatSE connexity;
+    Image <TLabel> imFlatZones;
+    std::vector <Vertex *> nodes;
+
+    void addBorders(Image<T> &im, const TCoord *preWidth, const TCoord *postWidth, T value)
     {
         TSize newSize[3];
         const TSize *oriSize = im.getSize();
@@ -85,14 +83,12 @@ public :
         im=temp;
     }
 
-
     void computeRAGraph();
     void computeFlatZones();
 
 public :
-    std::vector <Vertex *> nodes;
 
-    RAGraph(Image <RGB> imSource, FlatSE connexity) {
+    RAGraph(Image <T> imSource, FlatSE connexity) {
         this->imSource=imSource;
         this->connexity=connexity;
         computeRAGraph();
@@ -100,6 +96,11 @@ public :
     ~RAGraph() {
         for(int i=1; i<nodes.size(); i++) delete nodes[i];
     }
+
+    int getSize() {return nodes.size();}
+    T getValue(int i) {return nodes[i]->value;}
+    std::vector<Point<TCoord> > getPixels(int i) {return nodes[i]->pixels;}
+
 
     void writeDot(const char *fileName);
     void print();

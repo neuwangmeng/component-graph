@@ -3,7 +3,7 @@
 
 template <class T> class GraphNode
 {
-private:
+public:
     int id; /// unique identifier
     T value; /// original node value
     T modifiedValue; /// modified node value
@@ -11,7 +11,7 @@ private:
     bool active; /// true if the node contributes to image reconstruction
 
     std::vector<GraphNode *> childs; /// list of direct descendants
-    std::vector<Node *> fathers; /// list of direct ascendants
+    std::vector<GraphNode *> fathers; /// list of direct ascendants
     std::vector<int> pixels; /// list of pixels offsets belonging to the node
 
 
@@ -22,11 +22,10 @@ private:
     //        int contrast;
     //        bool active;
 
-public:
-    GraphNode(int id, GraphValue value, GraphAttributes attributes) {
+    GraphNode(int id, T value) {
         this->id=id;
         this->value=value;
-        this->attributes=attributes;
+        this->modifiedValue=value;
         active=true;
     }
     void addChild(GraphNode *child) {

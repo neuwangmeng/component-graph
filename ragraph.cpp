@@ -8,7 +8,8 @@
 
 #include "ragraph.h"
 
-void RAGraph::computeFlatZones()
+template <class T>
+void RAGraph<T>::computeFlatZones()
 {
     imFlatZones.setSize(imSource.getSize());
 
@@ -19,13 +20,13 @@ void RAGraph::computeFlatZones()
     const TCoord *back=se.getNegativeOffsets();
     const TCoord *front=se.getPositiveOffsets();
 
-    TLabel BORDER=-1;
+    TLabel BORDER=-2;
 
-    Image<RGB> imBorder=imSource;
+    Image<T> imBorder=imSource;
     Image<TLabel> resBorder(imSource.getSize() );
-    resBorder.fill(0);
+    resBorder.fill(-1);
 
-    addBorders(imBorder,back,front,RGB(0));
+    addBorders(imBorder,back,front,T(0));
     addBorders(resBorder,back,front,BORDER);
 
     se.setContext(imBorder.getSize());
@@ -36,7 +37,7 @@ void RAGraph::computeFlatZones()
     FlatSE::iterator itSe;
     FlatSE::iterator endSe=se.end();
 
-    TLabel currentLabel=1;
+    TLabel currentLabel=0;
 
     TOffset curOffset=0;
     for(it=imBorder.begin(); it!=end; ++it,curOffset++)
@@ -76,22 +77,21 @@ void RAGraph::computeFlatZones()
     }
 }
 
-void RAGraph::computeRAGraph() {
+template <class T>
+void RAGraph<T>::computeRAGraph() {
 
     int dx=imSource.getSizeX();
     int dy=imSource.getSizeY();
     int dz=imSource.getSizeZ();
 
-    std::cout << dx << " " << dy << " " << dz << "\n";
-
     computeFlatZones();
 
-    TLabel nbFlatZones=imFlatZones.getMax();
+    TLabel nbFlatZones=imFlatZones.getMax()+1;
     // flat-zones are numbered 1,...
     // to achieve simple indexing we reserve nbFlatZones+1 nodes
     // so nodes[FZi] stores the flat-zone numbered i
-    nodes.resize(nbFlatZones+1);
-    for(int i=1; i<nodes.size(); i++) nodes[i]=new Vertex(i);
+    nodes.resize(nbFlatZones);
+    for(int i=0; i<nodes.size(); i++) nodes[i]=new Vertex(i);
 
     for(int z=0; z<dz; z++)
         for(int y=0; y<dy; y++)
@@ -100,7 +100,7 @@ void RAGraph::computeRAGraph() {
                 Point <TCoord> p(x,y,z);
                 // add pixel to corresponding node
                 nodes[imFlatZones(p)]->pixels.push_back(p);
-                nodes[imFlatZones(p)]->color=imSource(p);
+                nodes[imFlatZones(p)]->value=imSource(p);
 
                 //scan the neighbors
                 for(int i=0; i<connexity.getNbPoints(); i++) {
@@ -124,18 +124,17 @@ void RAGraph::computeRAGraph() {
             }
 }
 
-
-void RAGraph::writeDot(const char *fileName) {
-
-
-
+template <class T>
+void RAGraph<T>::writeDot(const char *fileName) {
+    // TODO
 }
 
-void RAGraph::print() {
+template <class T>
+void RAGraph<T>::print() {
     for(int i=1; i<nodes.size(); i++) {
         assert(i=nodes[i]->index);
         std::cout << "Node : " << nodes[i]->index << "\n";
-        std::cout << "\t Color : (" << (int)nodes[i]->color[0] << "," << (int)nodes[i]->color[1] << "," << (int)nodes[i]->color[2]   << ")\n";
+        std::cout << "\t Color : (" << (int)nodes[i]->value[0] << "," << (int)nodes[i]->value[1] << "," << (int)nodes[i]->value[2]   << ")\n";
         for(int j=0; j<nodes[i]->compNb.size(); j++) {
             std::cout << "\t ->" << nodes[i]->compNb[j]<< "\n";
         }
