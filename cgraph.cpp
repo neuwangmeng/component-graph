@@ -90,14 +90,12 @@ Image<RGB> CGraph::syntheticImage2()
 /**
 *   Computation of component-graph \ddot G
 **/
-int CGraph::computeGraph(ColorOrdering *order, CGraphWatcher *watcher) {
+template <class T>
+int CGraph<T>::computeGraph(ColorOrdering *order, CGraphWatcher *watcher) {
 
     OrderedQueue <int> pq;
 
     vector<bool> processed(rag->nodes.size());
-
-    //std::cout << rag->nodes.size() << "\n";
-
 
     /** Warning : nodes[0] does not exist !!!! */
     for(int i=1; i<rag->nodes.size(); i++) {
@@ -113,13 +111,13 @@ int CGraph::computeGraph(ColorOrdering *order, CGraphWatcher *watcher) {
     }
 
     // index from flat-zone number to corresponding node
-    vector <Node *> regionToNode(rag->nodes.size());
+    vector <GraphNode<T> *> regionToNode(rag->nodes.size());
     regionToNode.assign(regionToNode.size(),0);
 
     std::queue<int> fifo;
     std::vector<bool> infifo(regionToNode.size());
 
-    std::vector<Node *> potentialChilds;
+    std::vector<GraphNode<T> *> potentialChilds;
 
     while(!pq.empty() ) {
         int i=pq.get();
@@ -128,12 +126,10 @@ int CGraph::computeGraph(ColorOrdering *order, CGraphWatcher *watcher) {
             {
             watcher->progressUpdate();
             }
-        //std::cout << "Région visitée : " << i << "\n";
-
         if(regionToNode[i]==0) {
-            /** i est une région canonique (i==regionToNode[i]->index- */
+            /** i is a canonical region (i==regionToNode[i]->index- */
             RAGraph::Vertex *curVertex=rag->nodes[i];
-            Node *curNode=new Node(curVertex->index,curVertex->color,curVertex->pixels.size());
+            GraphNode *curNode=new GraphNode(curVertex->index,curVertex->color,curVertex->pixels.size());
 
             curNode->regions.push_back(i);
             regionToNode[i]=curNode;
@@ -142,7 +138,7 @@ int CGraph::computeGraph(ColorOrdering *order, CGraphWatcher *watcher) {
 
             potentialChilds.clear();
 
-            /** on lance la propagation */
+            /** start the propagation */
             infifo.assign(infifo.size(), false);
             fifo.push(i);
             infifo[i]=true;
@@ -157,18 +153,16 @@ int CGraph::computeGraph(ColorOrdering *order, CGraphWatcher *watcher) {
                     if(!infifo[nb] && order->islessequal(rag->nodes[i]->color , rag->nodes[nb]->color)) {
 
                         if(order->isequal(rag->nodes[i]->color , rag->nodes[nb]->color)) {
-                            /** ZP qui appartient au même noeud : on fusionne*/
+                            /** flat-zone which belongs to the same node: merge*/
                             curNode->regions.push_back(nb);
                             regionToNode[nb]=curNode;
-
-
-                            //std::cout << "Fusion de " << i << " et " << nb << "\n";
                         }
                         else {
-                            /** zp potentiellement descendant du noeud courant : on teste si un père du noeud est comparable avec curNode
-                        *  Si c'est le cas, a n'est pas un fils direct de curNode
-                        */
-                            Node *tmp=regionToNode[nb];
+                            /**  flat-zone which is potentially a descendant of the current node:
+                             *   if a father of the node is comparable with curNode, then
+                             *   a is not a direct child of curNode
+                             */
+                            GraphNode<T> *tmp=regionToNode[nb];
 
                             valueMax=std::max(valueMax,tmp->color[0]+tmp->color[1]+tmp->color[2]);
 
@@ -186,10 +180,9 @@ int CGraph::computeGraph(ColorOrdering *order, CGraphWatcher *watcher) {
                                     tmp->fathers.push_back(curNode);
 
                                 }
-                                //potentialChilds.push_back(tmp);
-                                //std::cout << "\t Ajoute " << nb << "\n";
+
                             }
-                        //}
+
                         curNode->area+=rag->nodes[nb]->pixels.size();
                         curNode->contrast=valueMax-(curNode->color[0]+curNode->color[1]+curNode->color[2]);
                         fifo.push(nb);
@@ -216,7 +209,7 @@ int CGraph::computeGraph(ColorOrdering *order, CGraphWatcher *watcher) {
 
     RGB value(0,0,0);
 
-    root=new Node(-1,value,imSource.getBufSize());
+    root=new GraphNode<T>(-1,value,imSource.getBufSize());
 
         for (int i=0; i<graph.size(); i++) {
 
@@ -236,157 +229,9 @@ bool CGraph::isLTE(RGB &v, RGB &w)
     else return false;
 }
 
-/**
-*   Computation of component-graph \ddot G using inverse order
-**/
-int CGraph::computeGraphInverse(CGraphWatcher *watcher) {
-
-    OrderedQueue <int> pq;
-
-    vector<bool> processed(rag->nodes.size());
-
-    //std::cout << rag->nodes.size() << "\n";
-
-
-    /** Warning : nodes[0] does not exist !!!! */
-    for(int i=1; i<rag->nodes.size(); i++) {
-
-        RGB value=rag->nodes[i]->color;
-
-        int R=value[0];
-        int G=value[1];
-        int B=value[2];
-        // put in the prior. queue the flat zone number
-        pq.put((R+G+B),i);
-        processed[i]=false;
-    }
-
-    // index from flat-zone number to corresponding node
-    vector <Node *> regionToNode(rag->nodes.size());
-    regionToNode.assign(regionToNode.size(),0);
-
-    std::queue<int> fifo;
-    std::vector<bool> infifo(regionToNode.size());
-
-    std::vector<Node *> potentialChilds;
-
-    while(!pq.empty() ) {
-        int i=pq.get();
-
-        if(watcher!=0)
-            {
-            watcher->progressUpdate();
-            }
-        //std::cout << "Région visitée : " << i << "\n";
-
-        if(regionToNode[i]==0) {
-            /** i est une région canonique (i==regionToNode[i]->index- */
-            RAGraph::Vertex *curVertex=rag->nodes[i];
-            Node *curNode=new Node(curVertex->index,curVertex->color,curVertex->pixels.size());
-
-            curNode->regions.push_back(i);
-            regionToNode[i]=curNode;
-
-            potentialChilds.clear();
-
-            /** on lance la propagation */
-            infifo.assign(infifo.size(), false);
-            fifo.push(i);
-            infifo[i]=true;
-            int M=0;
-            while(!fifo.empty()) {
-                int curpt=fifo.front();
-                M++;
-                fifo.pop();
-                RAGraph::Vertex *tmpVertex=rag->nodes[curpt];
-                for(int v=0; v<tmpVertex->allNb.size(); v++ ) {
-                    int nb=tmpVertex->allNb[v];
-                    if(!infifo[nb] && isLTE(rag->nodes[i]->color, rag->nodes[nb]->color))  {
-                        if(rag->nodes[i]->color == rag->nodes[nb]->color) {
-                        /** ZP qui appartient au même noeud : on fusionne*/
-                        curNode->regions.push_back(nb);
-                        regionToNode[nb]=curNode;
-
-                        /** Mise à jour de l'aire */
-
-                        //std::cout << "Fusion de " << i << " et " << nb << "\n";
-                        }
-                        else {
-                        /** zp potentiellement descendant du noeud courant : on teste si un père du noeud est comparable avec curNode
-                        *  Si c'est le cas, a n'est pas un fils direct de curNode
-                        */
-                            Node *tmp=regionToNode[nb];
-                            bool isChild=true;
-                            for(int a=0; a<tmp->fathers.size(); a++) {
-                                if(isLTE(curNode->color , tmp->fathers[a]->color) ) {
-                                    isChild=false;
-                                    break;
-                                }
-                            }
-                            if(isChild) {
-                                curNode->childs.push_back(tmp);
-                                tmp->fathers.push_back(curNode);
-
-                            }
-                        //potentialChilds.push_back(tmp);
-                        //std::cout << "\t Ajoute " << nb << "\n";
-                        }
-                        curNode->area+=rag->nodes[nb]->pixels.size();
-                        fifo.push(nb);
-                        infifo[nb]=true;
-                    }
-                }
-                //if(M%100==0) std::cout << "Size of vector potchilds : " << potentialChilds.size() << "\n";
-                /** On crée les liens */
-//                for(int c=0; c<potentialChilds.size(); c++) {
-//                    Node *n=potentialChilds[c];
-//                    bool isChild=true;
-//                    for(int a=0; a<n->fathers.size(); a++) {
-//                        if(curNode->color <= n->fathers[a]->color )
-//                            isChild=false;
-//                    }
-//                    if(isChild) {
-//                        curNode->childs.push_back(n);
-//                        n->fathers.push_back(curNode);
-//                    }
-//                }
-
-            }
-        processed[i]=true;
-        }
-    }
-
-    /** Assign a new index to each node */
-    for(int i=0; i<regionToNode.size(); i++) {
-        if(regionToNode[i]!=0 && regionToNode[i]->index==i) {
-            graph.push_back(regionToNode[i]);
-            graph[graph.size()-1]->index=graph.size()-1;
-        }
-
-    }
-
-    /** Add fictitious root*/
-
-    RGB value(255,255,255);
-
-    root=new Node(-1,value,imSource.getBufSize());
-
-        for (int i=0; i<graph.size(); i++) {
-
-            if(graph[i]->fathers.size()==0) {
-                root->addChild(graph[i]);
-            }
-        }
-
-    return 1;
-}
-
-
 
 void CGraph::areaFiltering(int areaMin)
 {
-
-
     for(int i=0; i<graph.size(); i++) {
         Node *n=graph[i];
         if(n->area<areaMin) n->active=false;
@@ -398,8 +243,6 @@ void CGraph::areaFiltering(int areaMin)
 
 void CGraph::areaFiltering(int areaMin, int areaMax)
 {
-
-
     for(int i=0; i<graph.size(); i++) {
         Node *n=graph[i];
         if(n->area<areaMin || n->area>areaMax) n->active=false;
@@ -411,7 +254,6 @@ void CGraph::areaFiltering(int areaMin, int areaMax)
 
 void CGraph::contrastFiltering(int contrastMin)
 {
-
     for(int i=0; i<graph.size(); i++) {
         Node *n=graph[i];
         if(n->contrast<contrastMin) n->active=false;
@@ -432,8 +274,6 @@ void CGraph::resetFiltering()
 */
 void CGraph::adaptiveAreaFiltering(int p)
 {
-
-
     std::map<int, int> histo;
     for(int i=0; i<graph.size(); i++) {
         Node *n=graph[i];
@@ -458,11 +298,9 @@ void CGraph::adaptiveAreaFiltering(int p)
             break;
             }
     }
-    //qDebug() << "Area = " << threshold <<"\n";
     areaFiltering(threshold);
 
 }
-
 
 /**
     Keep the p % nodes having the biggest area
@@ -498,11 +336,8 @@ void CGraph::adaptiveContrastFiltering(int p)
 
 }
 
-
 void CGraph::contrastFiltering(int contrastMin, int contrastMax)
 {
-
-
     for(int i=0; i<graph.size(); i++) {
         Node *n=graph[i];
         if(n->contrast<contrastMin || n->contrast>contrastMax) n->active=false;
@@ -510,59 +345,6 @@ void CGraph::contrastFiltering(int contrastMin, int contrastMax)
 
     if(root->contrast<contrastMin || root->contrast>contrastMax) root->active=false;
 }
-
-//void CGraph::reconstructMin()
-//{
-//    std::queue<Node *> fifo;
-
-//    vector <bool> active(graph.size());
-//    active.assign(active.size(),true);
-
-//    for(int i=0; i<graph.size(); i++) {
-//        if(graph[i]->active==false && graph[i]->fathers.size()>1) {
-//            fifo.push(graph[i]);
-//            active[graph[i]->index]=false;
-
-//            while(!fifo.empty()) {
-//                Node *n=fifo.front();
-//                fifo.pop();
-
-//                int nactive=0;
-
-//                for(int j=0; j<n->fathers.size(); j++) {
-//                    if(n->fathers[j]->active==true) nactive++;
-//                }
-//                //qDebug() << "Node: " << n->label << " "<<  nactive << "\n";
-//                int j=0;
-//                while(nactive>1) {
-//                    if(n->fathers[j]->active==true) {
-//                        n->fathers[j]->active=false;
-//                        if(active[n->fathers[j]->index])
-//                        {
-//                            fifo.push( n->fathers[j]);
-//                            active[n->fathers[j]->index]=false;
-//                        }
-//                        nactive--;
-//                    }
-//                    j++;
-//                }
-//            }
-//        }
-//    }
-
-//    for(int i=0; i<graph.size(); i++) {
-//        if(graph[i]->active==false) {
-//            Node *n=graph[i];
-//            int nactive=0;
-//            for(int j=0; j<n->fathers.size(); j++) {
-//                if(n->fathers[j]->active==true) nactive++;
-//            }
-//            assert(nactive==0 || nactive==1);
-//        }
-//    }
-
-//}
-
 
 Image<RGB> CGraph::constructImageInf()
 {
@@ -610,7 +392,6 @@ Image<RGB> CGraph::constructImageInf()
                     value[2]=std::min(value[2],n->fathers[j]->color[2]);
                 }
             }
-            //qDebug() << "Node: " << n->label << " "<<  nactive << "\n";
             if(nactive>1) {
                 for(int j=0; j<n->fathers.size(); j++) {
 
@@ -642,7 +423,6 @@ Image<RGB> CGraph::constructImageInf()
 
     while(!pq.empty()) {
         Node *curNode=pq.get();
-       //qDebug() << curNode->index << "(" << curNode->color[0] << "," << curNode->color[1] << ","  << curNode->color[2] << ") \n";
         if(curNode->active==true && curNode->dispColor!=rgbmin) {
             curNode->dispColor=curNode->color;
         }
@@ -652,7 +432,6 @@ Image<RGB> CGraph::constructImageInf()
         for(int c=0; c<curNode->childs.size(); c++) {
             Node *curChild=curNode->childs[c];
             if(curChild->active==false) {
-//            if(curNode->dispColor>curChild->dispColor)
                curChild->dispColor=curNode->dispColor;
             }
 
@@ -668,9 +447,7 @@ void CGraph::paintNode(Image <RGB> &imRes, Node *n, RGB &value)
     for(int r=0; r<n->regions.size(); r++) {
         vector<Point<TCoord> > points=rag->nodes[n->regions[r]]->pixels;
         for(int p=0; p<points.size(); p++) {
-           // assert(value < n->color|| value > n->color || value == n->color  );
-            //if(value> imRes(points[p]))
-                imRes(points[p])=value;
+            imRes(points[p])=value;
         }
     }
 }
@@ -718,7 +495,6 @@ Image<RGB> CGraph::constructImage(ColorOrdering *order)
 
     while(!pq.empty()) {
         Node *curNode=pq.get();
-       //qDebug() << curNode->index << "(" << curNode->color[0] << "," << curNode->color[1] << ","  << curNode->color[2] << ") \n";
         if(curNode->active==true ) {
             curNode->dispColor=curNode->color;
         }
@@ -728,71 +504,13 @@ Image<RGB> CGraph::constructImage(ColorOrdering *order)
         for(int c=0; c<curNode->childs.size(); c++) {
             Node *curChild=curNode->childs[c];
             if(curChild->active==false) {
-//            if(curNode->dispColor>curChild->dispColor)
                curChild->dispColor=curNode->dispColor;
             }
-
         }
     }
 
     return imRes;
 }
-
-
-
-Image<RGB> CGraph::constructImageInverse()
-{
-    Image<RGB> imRes=imSource;
-    imRes.fill(0);
-    std::queue<Node *> fifo;
-
-    OrderedQueue <Node *> pq;
-
-    vector<bool> processed(graph.size());
-
-    RGB rgbmin(0,0,0);
-
-    /** Warning : nodes[0] does not exist !!!! */
-    for(int i=0; i<graph.size(); i++) {
-
-        graph[i]->dispColor=rgbmin;
-
-        RGB value=graph[i]->color;
-
-        int R=value[0];
-        int G=value[1];
-        int B=value[2];
-        pq.put(-(R+G+B),graph[i]);
-        processed[i]=false;
-    }
-
-    /** Special case for the root*/
-    pq.put(-1,root);
-
-
-    while(!pq.empty()) {
-        Node *curNode=pq.get();
-
-        if(curNode->active==true ) {
-            curNode->dispColor=curNode->color;
-        }
-
-        paintNode(imRes,curNode, curNode->dispColor);
-
-        for(int c=0; c<curNode->childs.size(); c++) {
-            Node *curChild=curNode->childs[c];
-            if(curChild->active==false) {
-//            if(curNode->dispColor>curChild->dispColor)
-               curChild->dispColor=curNode->dispColor;
-            }
-
-        }
-    }
-
-    return imRes;
-}
-
-
 
 bool CGraph::notComparable(Image<RGB> &im, Point<TCoord> &p, Point<TCoord> &q)
 {
@@ -801,7 +519,6 @@ bool CGraph::notComparable(Image<RGB> &im, Point<TCoord> &p, Point<TCoord> &q)
     else return false;
 
 }
-
 
 int CGraph::writeDot(const char *filename)
 {
@@ -864,10 +581,8 @@ int CGraph::writeDot(const char *filename)
         return 0;
 }
 
-
-
 /** check if set n is equal to m */
-bool CGraph::isEqual(Node *n, Node *m) {
+bool CGraph::isEqual(GraphNode<T> *n, GraphNode<T> *m) {
 
     if(n->area!=m->area) return false;
 
@@ -886,11 +601,9 @@ bool CGraph::isEqual(Node *n, Node *m) {
     return true;
 }
 
-
-
 /** Test if set n is included in m
 */
-bool CGraph::isIncluded(Node *n, Node *m, vector<bool> &tmp)
+bool CGraph::isIncluded(GraphNode<T> *n, GraphNode<T> *m, vector<bool> &tmp)
 {
     tmp.assign(tmp.size(), false);
     for(int i=0; i<m->pixels.size(); i++)
@@ -917,11 +630,9 @@ void CGraph::computeLinks(ColorOrdering *order, vector <Node *> &nodes)
     }
 }
 
-
-
-CGraph::Node * CGraph::addRoot(vector <Node *> &nodes)
+CGraph::Node * CGraph::addRoot(vector <GraphNode<T> *> &nodes)
 {
-    Node *root=new Node(-1,0 ,0);
+    Node *root=new GraphNode<T>(-1,0 ,0);
 
     for (int i=0; i<nodes.size(); i++) {
         if(nodes[i]->fathers.size()==0) {
@@ -931,8 +642,7 @@ CGraph::Node * CGraph::addRoot(vector <Node *> &nodes)
     return root;
 }
 
-
-vector <CGraph::Node *> CGraph::minimalElements(ColorOrdering *order, vector <Node *> &nodes, vector <bool> &tmp) {
+vector <CGraph::Node *> CGraph::minimalElements(ColorOrdering *order, vector <GraphNode<T> *> &nodes, vector <bool> &tmp) {
     vector <Node *> res;
 
     vector <bool> active(nodes.size(), true);
@@ -959,11 +669,11 @@ vector <CGraph::Node *> CGraph::minimalElements(ColorOrdering *order, vector <No
 * For each node:
 *  - keep as childs only the minimal elements of the childs
 */
-void CGraph::computeTransitiveReduction(ColorOrdering *order, vector<Node *> &nodes)
+void CGraph::computeTransitiveReduction(ColorOrdering *order, vector<GraphNode<T> *> &nodes)
 {
     vector<bool> tmp(imSource.getBufSize(),false);
     for(int i=0; i<nodes.size(); i++) {
-        Node *curNode=nodes[i];
+        GraphNode<T> *curNode=nodes[i];
         curNode->childs=minimalElements(order,curNode->childs, tmp);
     }
 }

@@ -16,6 +16,7 @@
 #include "Image.h"
 #include "FlatSE.h"
 #include "ragraph.h"
+#include "graphnode.h"
 #include "cgraphwatcher.h"
 #include "colorordering.h"
 
@@ -23,52 +24,45 @@ using namespace LibTIM;
 using namespace std;
 
 
+enum class GraphAttributes {
+    Area,
+    Contrast,
+    Volume,
+    Compacity
+};
+
 /** Component-graph storage and computation **/
 
-class CGraph
+template <class T> class CGraph
 {
-public:
-    /** A node of the directed graph */
-    struct Node {
-        int index;
-        RGB color;
-        RGB dispColor;
-        Node(int index, RGB color, int area) {this->index=index; this->color=color; this->area=area; active=true;}
-        std::vector<Node *> childs;
-        std::vector<Node *> fathers;
-        // list of flat-zones belonging to node and having same value
-        std::vector<int > regions;
-        std::vector<int> pixels;
-        int area;
-        int contrast;
-        bool active;
-
-        void addChild(Node *child) {
-            this->childs.push_back(child);
-            child->fathers.push_back(this);
-        }
-    };
-
-public :
+private:
     RAGraph *rag; /*!< Region adjacency graph on which is computed the component-graph */
 
-    Image<RGB> imSource; /*! Source image */
-    FlatSE connexity;   /*!< Underlying connexity (4- or 8-) */
+    Image<RGB> imSource; /*! Source image (2D or 3D) */
+    FlatSE connexity;   /*!< Underlying connexity (2D: 4- 8-  or 3D : 6- 18- 26-) */
 
     /** Container of the nodes of the (directed) graph **/
-    std::vector<Node *> graph;
+    std::vector<GraphNode<T> *> graph;
+    /** Attributes computed in the graph **/
+    std::map<GraphAttributes,bool> usedAttributes;
+    /** Attributes of the nodes **/
+    std::map<GraphAttributes,std::vector<int> > attributes;
     /** Root of the graph **/
-    Node *root;
+    GraphNode *root;
 
 public:
 
-    CGraph(Image <RGB> &imSource, FlatSE &connexity) {
+    CGraph(Image <RGB> &imSource, FlatSE &connexity, std::vector<GraphAttributes> listOfAttributes) {
         this->imSource=imSource;
         this->connexity=connexity;
-        //std::cout << "Compute RAG\n";
         this->rag=new RAGraph(imSource,connexity);
-        //std::cout << "RAG computed\n";
+
+        for(int i=0; i<listOfAttributes.size(); i++) {
+            std::vector<int> v;
+            this->attributes[listOfAttributes[i]]=v;
         }
+    }
+
     CGraph(RAGraph *rag) : rag(rag) {}
     ~CGraph() { delete rag;}
 
@@ -92,16 +86,16 @@ public:
     Image<RGB> constructImage(ColorOrdering *order);
 
     /** Helper functions **/
-    vector<CGraph::Node *> computeComponents(ColorOrdering *order, OrderedQueue<RGB> &pq);
+    vector<GraphNode<T> *> computeComponents(ColorOrdering *order, OrderedQueue<RGB> &pq);
     static bool notComparable(Image<RGB> &im, Point<TCoord> &p, Point<TCoord> &q);
 
-    bool isEqual(Node *n, Node *m);
-    bool isIncluded(Node *n, Node *m);
-    bool isIncludedFast(Node *n, Node *m, vector<bool> &tmp);
+    bool isEqual(GraphNode<T> *n, GraphNode<T> *m);
+    bool isIncluded(GraphNode<T> *n, GraphNode<T> *m);
+    bool isIncludedFast(GraphNode<T> *n, GraphNode<T> *m, vector<bool> &tmp);
     void computeLinks(ColorOrdering *order, vector<Node *> &nodes);
-    Node *addRoot(vector<Node *> &nodes);
-    vector<Node *> minimalElements(ColorOrdering *order, vector<Node *> &nodes, vector<bool> &tmp);
-    void computeTransitiveReduction(ColorOrdering *order, vector<Node *> &nodes);
+    GraphNode<T> *addRoot(vector<GraphNode<T> *> &nodes);
+    vector<GraphNode<T> *> minimalElements(ColorOrdering *order, vector<GraphNode<T> *> &nodes, vector<bool> &tmp);
+    void computeTransitiveReduction(ColorOrdering *order, vector<GraphNode<T> *> &nodes);
 
     int computeGraphInverse(CGraphWatcher *watcher);
     Image<RGB> constructImageInf();
@@ -117,12 +111,12 @@ public:
     void adaptiveAreaFiltering(int p);
     void adaptiveContrastFiltering(int p);
 
-    bool isIncluded(Node *n, Node *m, vector<bool> &tmp);
+    bool isIncluded(GraphNode<T> *n, GraphNode<T> *m, vector<bool> &tmp);
 private:
-    void paintNode(Image<RGB> &im, Node *n, RGB &value);
-    void paintNodeSup(Image<RGB> &imRes, Node *n, RGB &value);
+    void paintNode(Image<RGB> &im, GraphNode<T> *n, RGB &value);
+    void paintNodeSup(Image<RGB> &imRes, GraphNode<T> *n, RGB &value);
 
-    vector<Node *> computeComponents(Image<RGB> &im, FlatSE &connexity);
+    vector<GraphNode<T> *> computeComponents(Image<RGB> &im, FlatSE &connexity);
 
 };
 
