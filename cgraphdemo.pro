@@ -1,7 +1,7 @@
 TEMPLATE = app
 CONFIG += console
-CONFIG -= app_bundle
 CONFIG -= qt
+CONFIG -= app_bundle
 
 # remove possible other optimization flags
 QMAKE_CXXFLAGS_RELEASE -= -O

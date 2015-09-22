@@ -122,9 +122,6 @@ private:
     int getContrast(GraphNode <T> *node) {return attributes[GraphAttributes::Contrast][node->id];}
     int getVolume(GraphNode <T> *node) {return attributes[GraphAttributes::Volume][node->id];}
     int getCompacity(GraphNode <T> *node) {return attributes[GraphAttributes::Compacity][node->id];}
-
-
-
 };
 
 #include "cgraph.hxx"

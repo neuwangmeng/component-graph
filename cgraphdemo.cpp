@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     // -connexity: 26-adjacency
     // compatible with 2D (8-connexity) and 3D images
     FlatSE connexity;
-    connexity.make3DN26();
+    connexity.make2DN8();
 
     // Load source image imSrc in ppm format, 2D RGB (8 bits)
     Image<RGB>::load(argv[1],imSrc);
@@ -82,18 +82,18 @@ int main(int argc, char *argv[])
     cgraph->computeGraph();
 
     // Area and contrast filtering
-    cgraph->areaFiltering(areaMin);
-    cgraph->contrastFiltering(contrastMin);
+    //cgraph->areaFiltering(areaMin);
+    //cgraph->contrastFiltering(contrastMin);
 
     // Write graph in dot format
     // Filtered nodes are shown in gray
-    cgraph->writeDot("cgraph.dot");
+    //cgraph->writeDot("cgraph.dot");
 
     // Compute resulting image
-    Image<RGB> result=cgraph->constructImage();
+    //Image<RGB> result=cgraph->constructImage();
     // Save result in ppm format
-    result.save("result.ppm");
+    //result.save("result.ppm");
 
-    delete cgraph;
+    //delete cgraph;
 }
 

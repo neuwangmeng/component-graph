@@ -20,11 +20,13 @@ void RAGraph<T>::computeFlatZones()
     const TCoord *back=se.getNegativeOffsets();
     const TCoord *front=se.getPositiveOffsets();
 
-    TLabel BORDER=-2;
+    TLabel BORDER=0;
+    TLabel INIT=1;
+    TLabel FIRSTLABEL=2;
 
     Image<T> imBorder=imSource;
     Image<TLabel> resBorder(imSource.getSize() );
-    resBorder.fill(-1);
+    resBorder.fill(INIT);
 
     addBorders(imBorder,back,front,T(0));
     addBorders(resBorder,back,front,BORDER);
@@ -37,12 +39,12 @@ void RAGraph<T>::computeFlatZones()
     FlatSE::iterator itSe;
     FlatSE::iterator endSe=se.end();
 
-    TLabel currentLabel=0;
+    TLabel currentLabel=FIRSTLABEL;
 
     TOffset curOffset=0;
     for(it=imBorder.begin(); it!=end; ++it,curOffset++)
     {
-        if(resBorder(curOffset) ==0)
+        if(resBorder(curOffset) ==INIT)
         {
             fifo.push(curOffset);
 
@@ -57,7 +59,7 @@ void RAGraph<T>::computeFlatZones()
                 {
                     TOffset q=p+ *itSe;
 
-                    if(imBorder(q)==imBorder(p) && resBorder(q)==0)
+                    if(imBorder(q)==imBorder(p) && resBorder(q)==INIT)
                     {
 
                         resBorder(q)=currentLabel;
@@ -69,11 +71,13 @@ void RAGraph<T>::computeFlatZones()
         }
     }
 
+    // compute imFlatZones by removing borders
+    // and maps the result to 0 ... NB_LABEL-1
     Image<TLabel>::iteratorXYZ itLabelXYZ;
     Image<TLabel>::iteratorXYZ endRes=imFlatZones.end();
     for(itLabelXYZ=imFlatZones.begin(); itLabelXYZ!=endRes; ++itLabelXYZ)
     {
-        *itLabelXYZ=resBorder(itLabelXYZ.x+back[0], itLabelXYZ.y+back[1], itLabelXYZ.z+back[2]);
+        *itLabelXYZ=resBorder(itLabelXYZ.x+back[0], itLabelXYZ.y+back[1], itLabelXYZ.z+back[2])-FIRSTLABEL;
     }
 }
 
@@ -87,9 +91,12 @@ void RAGraph<T>::computeRAGraph() {
     computeFlatZones();
 
     TLabel nbFlatZones=imFlatZones.getMax()+1;
-    // flat-zones are numbered 1,...
-    // to achieve simple indexing we reserve nbFlatZones+1 nodes
+    std::cerr << "Max fz : " << imFlatZones.getMax() << "\n";
+
+    // flat-zones are numbered 0 to nbFlatZones-1
+    // to achieve simple indexing we reserve nbFlatZones nodes
     // so nodes[FZi] stores the flat-zone numbered i
+    std::cerr << "Nb flat zones : " << nbFlatZones << "\n";
     nodes.resize(nbFlatZones);
     for(int i=0; i<nodes.size(); i++) nodes[i]=new Vertex(i);
 
