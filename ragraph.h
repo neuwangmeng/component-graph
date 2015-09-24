@@ -88,20 +88,20 @@ private:
 
 public :
 
-    RAGraph(Image <T> imSource, FlatSE connexity) {
+    RAGraph(Image <T> &imSource, FlatSE &connexity) {
         this->imSource=imSource;
         this->connexity=connexity;
         computeRAGraph();
     }
     ~RAGraph() {
-        for(int i=1; i<nodes.size(); i++) delete nodes[i];
+        for(int i=0; i<nodes.size(); i++) delete nodes[i];
     }
 
     int getSize() {return nodes.size();}
     T getValue(int i) {return nodes[i]->value;}
-    std::vector<Point<TCoord> > getPixels(int i) {return nodes[i]->pixels;}
+    const std::vector<Point<TCoord> > &getPixels(int i) {return nodes[i]->pixels;}
     int getIndex(int i) {return nodes[i]->index; }
-    std::vector<int> getAllNb(int i) {return nodes[i]->allNb;}
+    const std::vector<int> &getAllNb(int i) {return nodes[i]->allNb;}
 
     void writeDot(const char *fileName);
     void print();

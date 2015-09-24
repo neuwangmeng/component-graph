@@ -91,12 +91,10 @@ void RAGraph<T>::computeRAGraph() {
     computeFlatZones();
 
     TLabel nbFlatZones=imFlatZones.getMax()+1;
-    std::cerr << "Max fz : " << imFlatZones.getMax() << "\n";
 
     // flat-zones are numbered 0 to nbFlatZones-1
     // to achieve simple indexing we reserve nbFlatZones nodes
     // so nodes[FZi] stores the flat-zone numbered i
-    std::cerr << "Nb flat zones : " << nbFlatZones << "\n";
     nodes.resize(nbFlatZones);
     for(int i=0; i<nodes.size(); i++) nodes[i]=new Vertex(i);
 

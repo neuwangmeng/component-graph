@@ -52,7 +52,7 @@ private:
 
 public:
 
-    CGraph(Image <RGB> &imSource, FlatSE &connexity, std::vector<GraphAttributes> listOfAttributes, Ordering<T> *order) : graphWatcher(0) {
+    CGraph(Image <RGB> &imSource, FlatSE &connexity, std::vector<GraphAttributes> &listOfAttributes, Ordering<T> *order) : graphWatcher() {
         this->imSource=imSource;
         this->connexity=connexity;
         this->rag=new RAGraph<T>(imSource,connexity);

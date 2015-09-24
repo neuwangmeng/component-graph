@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 
     // Write graph in dot format
     // Filtered nodes are shown in gray
-    //cgraph->writeDot("cgraph.dot");
+    cgraph->writeDot("cgraph.dot");
 
     // Compute resulting image
     //Image<RGB> result=cgraph->constructImage();
