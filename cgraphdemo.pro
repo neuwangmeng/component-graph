@@ -25,6 +25,7 @@ QMAKE_CXXFLAGS_RELEASE *= -O3
 SOURCES += \
     cgraphdemo.cpp \
     cgraphwatcher.cpp \
+    tests.cpp
 
 HEADERS += \
     OrderedQueue.h \
@@ -42,4 +43,6 @@ HEADERS += \
     graphnode.h \
     cgraph.hxx \
     ragraph.hxx \
-    ordering.h
+    ordering.h \
+    graphattributes.h \
+    tests.h

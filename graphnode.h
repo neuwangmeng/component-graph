@@ -1,7 +1,15 @@
 #ifndef GRAPHNODE_H
 #define GRAPHNODE_H
 
-template <class T> class GraphNode
+#include <vector>
+#include "Image.h"
+#include "graphattributes.h"
+
+using namespace LibTIM;
+
+template <class U> class GraphAttributes;
+
+template <class T, class U> class GraphNode
 {
 public:
     int id; /// unique identifier
@@ -13,14 +21,13 @@ public:
     std::vector<GraphNode *> childs; /// list of direct descendants
     std::vector<GraphNode *> fathers; /// list of direct ascendants
     std::vector<Point<TCoord> > pixels; /// list of pixels offsets belonging to the node
-
-
-    // list of flat-zones belonging to node and having same value
-    // std::vector<int > regions;
-
-    //        int area;
-    //        int contrast;
-    //        bool active;
+    GraphAttributes<U> attributes;
+    void updateAttributes(const std::vector<Point<TCoord> > &pixels) {
+        // insert pixels in node
+        this->pixels.insert(this->pixels.end(), pixels.begin(), pixels.end());
+        // update node attributes
+        attributes.update(this, pixels);
+    }
 
     GraphNode(int id, T value) {
         this->id=id;

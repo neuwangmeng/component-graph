@@ -36,6 +36,24 @@ class graphWatcher : public CGraphWatcher{
     graphWatcher(int finalProgress) : CGraphWatcher(finalProgress) {}
 };
 
+class myAttributes {
+public:
+    myAttributes() {
+        area=0;
+        volume=0;
+        contrast=0;
+        compacity=0;
+    };
+
+    void update(const std::vector< Point <TCoord > > &pixels) {
+        this->area+=pixels.size();
+    };
+
+    int area;
+    int volume;
+    int contrast;
+    int compacity;
+};
 
 /**
 * Colour image attribute filtering based on \ddot component-graph on RGB colour space
@@ -66,13 +84,13 @@ int main(int argc, char *argv[])
     int areaMin=atoi(argv[2]);
     int contrastMin=atoi(argv[3]);
 
-    std::vector<GraphAttributes> attributes;
-    attributes.push_back(GraphAttributes::Area);
-    attributes.push_back(GraphAttributes::Contrast);
+//    std::vector<GraphAttributes> attributes;
+//    attributes.push_back(GraphAttributes::Area);
+//    attributes.push_back(GraphAttributes::Contrast);
 
     ColorMarginalOrdering  *order=new ColorMarginalOrdering();
 
-    CGraph<RGB> *cgraph=new CGraph<RGB>(imSrc,connexity,attributes,order);
+    CGraph<RGB,myAttributes> *cgraph=new CGraph<RGB,myAttributes>(imSrc,connexity,order);
 
     // Track computation progress
     graphWatcher *myWatcher=new graphWatcher(imSrc.getBufSize());

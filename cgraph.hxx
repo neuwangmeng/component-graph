@@ -12,86 +12,11 @@
 
 using namespace std;
 
-template <>
-Image<RGB> CGraph<RGB>::syntheticImage()
-{
-    int a[]={0,0,0};
-    int b[]={1,0,0};
-    int c[]={0,1,0};
-    int d[]={1,1,0};
-    int e[]={1,1,1};
-    int f[]={0,0,1};
-
-    RGB A(a);
-    RGB B(b);
-    RGB C(c);
-    RGB D(d);
-    RGB E(e);
-    RGB F(f);
-
-    TSize size[]={7,1,1};
-    TSpacing spacing[]={1.0,1.0,1.0};
-//    const RGB data[]={  A,B,C,B,A,
-//                        C,C,D,B,A,
-//                        B,B,C,A,B,
-//                        B,C,A,B,A,
-//                        A,C,B,C,A};
-    //const RGB data[]={  A,C,C,C,B,E,D,D,C,E,E,D,B,E,B,C,C,C,B,B,A};
-    const RGB data[]={ A,E,C,F,B,E,A};
-
-    //    TSize size[]={4,4,1};
-    //    TSpacing spacing[]={1.0,1.0,1.0};
-    //    const RGB data[]={A,A,B,B,
-    //                 B,C,B,B,
-    //                 A,A,E,D,
-    //                 A,E,E,D};
-    Image<RGB> imTmp(size,spacing,data);
-    return imTmp;
-}
-
-template <>
-Image<RGB> CGraph<RGB>::syntheticImage2()
-{
-    int a[]={0,0,0};
-    int b[]={1,0,0};
-    int c[]={0,1,0};
-    int d[]={1,1,0};
-    int e[]={1,1,1};
-    int f[]={0,0,1};
-
-    RGB A(a);
-    RGB B(b);
-    RGB C(c);
-    RGB D(d);
-    RGB E(e);
-    RGB F(f);
-
-    TSize size[]={21,1,1};
-    TSpacing spacing[]={1.0,1.0,1.0};
-//    const RGB data[]={  A,B,C,B,A,
-//                        C,C,D,B,A,
-//                        B,B,C,A,B,
-//                        B,C,A,B,A,
-//                        A,C,B,C,A};
-    const RGB data[]={  A,C,C,C,B,E,D,D,C,E,E,D,B,E,B,C,C,C,B,B,A};
-    //const RGB data[]={ A,E,C,F,B,E,A};
-
-    //    TSize size[]={4,4,1};
-    //    TSpacing spacing[]={1.0,1.0,1.0};
-    //    const RGB data[]={A,A,B,B,
-    //                 B,C,B,B,
-    //                 A,A,E,D,
-    //                 A,E,E,D};
-    Image<RGB> imTmp(size,spacing,data);
-    return imTmp;
-}
-
-
 /**
 *   Computation of component-graph \ddot G
 **/
-template <class T>
-int CGraph<T>::computeGraph() {
+template <class T, class U>
+int CGraph<T,U>::computeGraph() {
 
     OrderedQueue <int> pq;
 
@@ -107,11 +32,11 @@ int CGraph<T>::computeGraph() {
     }
 
     // index from flat-zone id to corresponding node
-    vector <GraphNode<T> *> regionToNode(rag->getSize(),nullptr );
+    vector <GraphNode<T,U> *> regionToNode(rag->getSize(),nullptr );
     std::queue<int> fifo;
     std::vector<bool> infifo(regionToNode.size());
 
-    std::vector<GraphNode<T> *> potentialChilds;
+    std::vector<GraphNode<T,U> *> potentialChilds;
 
     while(!pq.empty() ) {
         int i=pq.get();
@@ -122,9 +47,9 @@ int CGraph<T>::computeGraph() {
             }
         if(regionToNode[i]==nullptr) {
             /** i is a canonical region (i==regionToNode[i]->index) */
-            GraphNode<T> *curNode=new GraphNode<T>(rag->getIndex(i) ,rag->getValue(i));
+            GraphNode<T,U> *curNode=new GraphNode<T,U>(rag->getIndex(i) ,rag->getValue(i));
             // add region pixels to curNode
-            curNode->pixels.insert(curNode->pixels.end(), rag->getPixels(i).begin(), rag->getPixels(i).end());
+            curNode->updateAttributes(this->rag->getPixels(i));
             regionToNode[i]=curNode;
 
            // int valueMax=curNode->color[0]+curNode->color[1]+curNode->color[2];
@@ -150,8 +75,7 @@ int CGraph<T>::computeGraph() {
 
                         if(order->isequal(value1, value2)) {
                             /** flat-zone which belongs to the same node: merge pixels*/
-                            curNode->pixels.insert(curNode->pixels.end(), rag->getPixels(nb).begin(), rag->getPixels(nb).end());
-
+                            curNode->updateAttributes(this->rag->getPixels(nb));
                             regionToNode[nb]=curNode;
                         }
                         else {
@@ -159,7 +83,7 @@ int CGraph<T>::computeGraph() {
                              *   if a father of the node is comparable with curNode, then
                              *   a is not a direct child of curNode
                              */
-                            GraphNode<T> *tmp=regionToNode[nb];
+                            GraphNode<T,U> *tmp=regionToNode[nb];
 
                             //valueMax=std::max(valueMax,tmp->color[0]+tmp->color[1]+tmp->color[2]);
 
@@ -174,7 +98,6 @@ int CGraph<T>::computeGraph() {
                             if(isChild) {
                                 curNode->childs.push_back(tmp);
                                 tmp->fathers.push_back(curNode);
-
                             }
                         }
                         //curNode->area+=rag->nodes[nb]->pixels.size();
@@ -200,7 +123,7 @@ int CGraph<T>::computeGraph() {
 
     T value(0);
 
-    root=new GraphNode<T>(-1,value);
+    root=new GraphNode<T,U>(-1,value);
 
         for (int i=0; i<graph.size(); i++) {
 
@@ -212,60 +135,60 @@ int CGraph<T>::computeGraph() {
     return 1;
 }
 
-template <>
-bool CGraph<RGB>::isLTE(RGB &v, RGB &w)
+template <class T, class U>
+bool CGraph<T,U>::isLTE(RGB &v, RGB &w)
 {
     if(v[0]>=w[0] && v[1]>=w[1] && v[2]>=w[2] )
         return true;
     else return false;
 }
 
-template <class T>
-void CGraph<T>::areaFiltering(int areaMin)
+template <class T, class U>
+void CGraph<T,U>::areaFiltering(int areaMin)
 {
     for(int i=0; i<graph.size(); i++) {
-        GraphNode<T> *n=graph[i];
+        GraphNode<T,U> *n=graph[i];
         if(getArea(n)<areaMin) n->active=false;
     }
 
     if(getArea(root)<areaMin) root->active=false;
 }
 
-template <class T>
-void CGraph<T>::areaFiltering(int areaMin, int areaMax)
+template <class T, class U>
+void CGraph<T,U>::areaFiltering(int areaMin, int areaMax)
 {
     for(int i=0; i<graph.size(); i++) {
-        GraphNode<T> *n=graph[i];
+        GraphNode<T,U> *n=graph[i];
         if(getArea(n)<areaMin || getArea(n)>areaMax) n->active=false;
     }
 
     if(getArea(root)<areaMin || getArea(root)>areaMax) root->active=false;
 }
 
-template <class T>
-void CGraph<T>::contrastFiltering(int contrastMin)
+template <class T, class U>
+void CGraph<T,U>::contrastFiltering(int contrastMin)
 {
     for(int i=0; i<graph.size(); i++) {
-        GraphNode<T> *n=graph[i];
+        GraphNode<T,U> *n=graph[i];
         if(getContrast(n)<contrastMin) n->active=false;
     }
 
     if(getContrast(root)<contrastMin) root->active=false;
 }
 
-template <class T>
-void CGraph<T>::contrastFiltering(int contrastMin, int contrastMax)
+template <class T, class U>
+void CGraph<T,U>::contrastFiltering(int contrastMin, int contrastMax)
 {
     for(int i=0; i<graph.size(); i++) {
-        GraphNode<T> *n=graph[i];
+        GraphNode<T,U> *n=graph[i];
         if(getContrast(n)<contrastMin || getContrast(n)>contrastMax) n->active=false;
     }
 
     if(getContrast(root)<contrastMin || getContrast(root)>contrastMax) root->active=false;
 }
 
-template <class T>
-void CGraph<T>::resetFiltering()
+template <class T, class U>
+void CGraph<T,U>::resetFiltering()
 {
 /** Initialisation*/
     for(int i=0; i<graph.size(); i++) {graph[i]->active=true;}
@@ -274,12 +197,12 @@ void CGraph<T>::resetFiltering()
 /**
     Keep the p % nodes having the biggest area
 */
-template <class T>
-void CGraph<T>::adaptiveAreaFiltering(int p)
+template <class T, class U>
+void CGraph<T,U>::adaptiveAreaFiltering(int p)
 {
     std::map<int, int> histo;
     for(int i=0; i<graph.size(); i++) {
-        GraphNode<T> *n=graph[i];
+        GraphNode<T,U> *n=graph[i];
         histo[-getArea(n)]++;
     }
 
@@ -307,12 +230,12 @@ void CGraph<T>::adaptiveAreaFiltering(int p)
 /**
     Keep the p % nodes having the biggest area
 */
-template <class T>
-void CGraph<T>::adaptiveContrastFiltering(int p)
+template <class T, class U>
+void CGraph<T,U>::adaptiveContrastFiltering(int p)
 {
     std::map<int, int> histo;
     for(int i=0; i<graph.size(); i++) {
-        GraphNode<T> *n=graph[i];
+        GraphNode<T,U> *n=graph[i];
         histo[-getContrast(n)]++;
     }
 
@@ -334,21 +257,20 @@ void CGraph<T>::adaptiveContrastFiltering(int p)
             break;
             }
     }
-    //qDebug() << "Area = " << threshold <<"\n";
     contrastFiltering(threshold);
 
 }
 
-template <>
-void CGraph<RGB>::paintNode(Image <RGB> &imRes, GraphNode<RGB> *n, RGB &value)
+template <class T, class U>
+void CGraph<T,U>::paintNode(Image <RGB> &imRes, GraphNode<RGB,U> *n, RGB &value)
 {
     for(int i=0; i<n->pixels.size(); i++) {
         imRes(n->pixels[i])=value;
     }
 }
 
-template <>
-void CGraph<RGB>::paintNodeSup(Image <RGB> &imRes, GraphNode<RGB> *n, RGB &value)
+template <class T, class U>
+void CGraph<T,U>::paintNodeSup(Image <RGB> &imRes, GraphNode<RGB,U> *n, RGB &value)
 {
     for(int i=0; i<n->pixels.size(); i++) {
         imRes(n->pixels[i])=value;
@@ -360,14 +282,14 @@ void CGraph<RGB>::paintNodeSup(Image <RGB> &imRes, GraphNode<RGB> *n, RGB &value
     }
 }
 
-template <>
-Image<RGB> CGraph<RGB>::constructImageInf()
+template <class T, class U>
+Image<RGB> CGraph<T,U>::constructImageInf()
 {
-    std::queue<GraphNode<RGB> *> fifo;
+    std::queue<GraphNode<RGB,U> *> fifo;
 
     vector <bool> active(graph.size(),true);
 
-    OrderedQueue <GraphNode<RGB> *> pq;
+    OrderedQueue <GraphNode<RGB,U> *> pq;
 
     vector<bool> processed(graph.size());
 
@@ -391,7 +313,7 @@ Image<RGB> CGraph<RGB>::constructImageInf()
     root->modifiedValue=rgbmin;
 
     while(!pq.empty()) {
-        GraphNode<RGB> *n=pq.get();
+        GraphNode<RGB,U> *n=pq.get();
 
         if(n->active==false && n->fathers.size()>1) {
 
@@ -436,7 +358,7 @@ Image<RGB> CGraph<RGB>::constructImageInf()
     pq.put(-1,root);
 
     while(!pq.empty()) {
-        GraphNode<RGB> *curNode=pq.get();
+        GraphNode<RGB,U> *curNode=pq.get();
         if(curNode->active==true && curNode->modifiedValue !=rgbmin) {
             curNode->modifiedValue=curNode->value;
         }
@@ -444,7 +366,7 @@ Image<RGB> CGraph<RGB>::constructImageInf()
         paintNode(imRes,curNode, curNode->modifiedValue);
 
         for(int c=0; c<curNode->childs.size(); c++) {
-            GraphNode<RGB> *curChild=curNode->childs[c];
+            GraphNode<RGB,U> *curChild=curNode->childs[c];
             if(curChild->active==false) {
                curChild->modifiedValue=curNode->modifiedValue;
             }
@@ -456,14 +378,14 @@ Image<RGB> CGraph<RGB>::constructImageInf()
 
 }
 
-template <>
-Image<RGB> CGraph<RGB>::constructImage()
+template <class T, class U>
+Image<RGB> CGraph<T,U>::constructImage()
 {
     Image<RGB> imRes=imSource;
     imRes.fill(0);
-    std::queue<GraphNode<RGB> *> fifo;
+    std::queue<GraphNode<RGB,U> *> fifo;
 
-    OrderedQueue <GraphNode<RGB> *> pq;
+    OrderedQueue <GraphNode<RGB,U> *> pq;
 
     vector<bool> processed(graph.size());
 
@@ -482,7 +404,7 @@ Image<RGB> CGraph<RGB>::constructImage()
 
 
     while(!pq.empty()) {
-        GraphNode<RGB> *curNode=pq.get();
+        GraphNode<RGB,U> *curNode=pq.get();
         if(curNode->active==true ) {
             curNode->modifiedValue=curNode->value;
         }
@@ -490,7 +412,7 @@ Image<RGB> CGraph<RGB>::constructImage()
         paintNode(imRes,curNode, curNode->modifiedValue);
 
         for(int c=0; c<curNode->childs.size(); c++) {
-            GraphNode<RGB> *curChild=curNode->childs[c];
+            GraphNode<RGB,U> *curChild=curNode->childs[c];
             if(curChild->active==false) {
                curChild->modifiedValue=curNode->modifiedValue;
             }
@@ -501,8 +423,8 @@ Image<RGB> CGraph<RGB>::constructImage()
 }
 
 
-template <class T>
-bool CGraph<T>::notComparable(Image<T> &im, Point<TCoord> &p, Point<TCoord> &q)
+template <class T, class U>
+bool CGraph<T,U>::notComparable(Image<T> &im, Point<TCoord> &p, Point<TCoord> &q)
 {
     if(!(im(p)<im(q) ) && !(im(p)>im(q)) && !(im(p)==im(q)))
         return true;
@@ -510,8 +432,8 @@ bool CGraph<T>::notComparable(Image<T> &im, Point<TCoord> &p, Point<TCoord> &q)
 
 }
 
-template <>
-int CGraph<RGB>::writeDot(const char *filename)
+template <class T, class U>
+int CGraph<T,U>::writeDot(const char *filename)
 {
     if(root!=0)
     {
@@ -529,11 +451,11 @@ int CGraph<RGB>::writeDot(const char *filename)
 
         file << "digraph G {\n";
 
-        std::queue <GraphNode<RGB> *> fifo;
+        std::queue <GraphNode<RGB,U> *> fifo;
         fifo.push(root);
         while(!fifo.empty() )
         {
-            GraphNode<RGB> *tmp=fifo.front();
+            GraphNode<RGB,U> *tmp=fifo.front();
             fifo.pop();
 
             std::stringstream nodeName;
@@ -577,8 +499,8 @@ int CGraph<RGB>::writeDot(const char *filename)
 }
 
 /** check if set n is equal to m */
-template <>
-bool CGraph<RGB>::isEqual(GraphNode<RGB> *n, GraphNode<RGB> *m) {
+template <class T, class U>
+bool CGraph<T,U>::isEqual(GraphNode<T,U> *n, GraphNode<T,U> *m) {
 
     if(getArea(n)==getArea(m)) return false;
 
@@ -599,8 +521,8 @@ bool CGraph<RGB>::isEqual(GraphNode<RGB> *n, GraphNode<RGB> *m) {
 
 /** Test if set n is included in m
 */
-template <class T>
-bool CGraph<T>::isIncluded(GraphNode<T> *n, GraphNode<T> *m, vector<bool> &tmp)
+template <class T, class U>
+bool CGraph<T,U>::isIncluded(GraphNode<T,U> *n, GraphNode<T,U> *m, vector<bool> &tmp)
 {
     tmp.assign(tmp.size(), false);
     for(int i=0; i<m->pixels.size(); i++)
@@ -611,15 +533,15 @@ bool CGraph<T>::isIncluded(GraphNode<T> *n, GraphNode<T> *m, vector<bool> &tmp)
     return true;
 }
 
-template <class T>
-void CGraph<T>::computeLinks(vector <GraphNode<T> *> &nodes)
+template <class T, class U>
+void CGraph<T,U>::computeLinks(vector <GraphNode<T,U> *> &nodes)
 {
     vector<bool> tmp(imSource.getBufSize(),false);
     for(int i=0; i<nodes.size(); i++) {
-        GraphNode<T> *n=nodes[i];
+        GraphNode<T,U> *n=nodes[i];
         for(int j=0; j<nodes.size(); j++) {
             if(j!=i && getArea(nodes[j])<=getArea(nodes[i]) && order->islessequal(nodes[i]->value,nodes[j]->value)) {
-                GraphNode<T> *m=nodes[j];
+                GraphNode<T,U> *m=nodes[j];
                 if(!order->isequal(m->value,n->value) && isIncluded(m,n,tmp)) {
                     n->addChild(m);
                 }
@@ -628,10 +550,10 @@ void CGraph<T>::computeLinks(vector <GraphNode<T> *> &nodes)
     }
 }
 
-template <class T>
-GraphNode<T> * CGraph<T>::addRoot(vector <GraphNode<T> *> &nodes)
+template <class T, class U>
+GraphNode<T,U> * CGraph<T,U>::addRoot(vector <GraphNode<T,U> *> &nodes)
 {
-    GraphNode<T> *root=new GraphNode<T>(-1,0);
+    GraphNode<T,U> *root=new GraphNode<T,U>(-1,0);
 
     for (int i=0; i<nodes.size(); i++) {
         if(nodes[i]->fathers.size()==0) {
@@ -641,9 +563,9 @@ GraphNode<T> * CGraph<T>::addRoot(vector <GraphNode<T> *> &nodes)
     return root;
 }
 
-template <class T>
-vector <GraphNode<T> *> CGraph<T>::minimalElements(vector <GraphNode<T> *> &nodes, vector <bool> &tmp) {
-    vector <GraphNode<T> *> res;
+template <class T, class U>
+vector <GraphNode<T,U> *> CGraph<T,U>::minimalElements(vector <GraphNode<T,U> *> &nodes, vector <bool> &tmp) {
+    vector <GraphNode<T,U> *> res;
 
     vector <bool> active(nodes.size(), true);
     for(int j=0; j<nodes.size(); j++) {
@@ -669,25 +591,25 @@ vector <GraphNode<T> *> CGraph<T>::minimalElements(vector <GraphNode<T> *> &node
 * For each node:
 *  - keep as childs only the minimal elements of the childs
 */
-template <class T>
-void CGraph<T>::computeTransitiveReduction(vector<GraphNode<T> *> &nodes)
+template <class T, class U>
+void CGraph<T,U>::computeTransitiveReduction(vector<GraphNode<T,U> *> &nodes)
 {
     vector<bool> tmp(imSource.getBufSize(),false);
     for(int i=0; i<nodes.size(); i++) {
-        GraphNode<T> *curNode=nodes[i];
+        GraphNode<T,U> *curNode=nodes[i];
         curNode->childs=minimalElements(curNode->childs, tmp);
     }
 }
 
 /** Compute the nodes for G and \dot G component-graph
 **/
-template <class T>
-vector<GraphNode<T> *> CGraph<T>::computeComponents(OrderedQueue <RGB> &pq)
+template <class T, class U>
+vector<GraphNode<T,U> *> CGraph<T,U>::computeComponents(OrderedQueue <RGB> &pq)
 {
     int dx=imSource.getSizeX();
     int dy=imSource.getSizeY();
 
-    vector <GraphNode<T> *> nodes;
+    vector <GraphNode<T,U> *> nodes;
 
     Image<bool> active(imSource.getSize());
     Image<bool> inQueue(imSource.getSize());
@@ -718,7 +640,7 @@ vector<GraphNode<T> *> CGraph<T>::computeComponents(OrderedQueue <RGB> &pq)
                     ncomposantes++;
                     inQueue(p)=true;
 
-                    GraphNode<T> *n=new GraphNode<T>(index,value);
+                    GraphNode<T,U> *n=new GraphNode<T,U>(index,value);
                     index++;
 
                      if(index%100000==0)
@@ -732,7 +654,7 @@ vector<GraphNode<T> *> CGraph<T>::computeComponents(OrderedQueue <RGB> &pq)
 
                         active(curPt)=false;
 
-                        attributes[GraphAttributes::Area][n->id]++;
+                       // attributes[GraphAttributes::Area][n->id]++;
                         n->pixels.push_back(imSource.getOffset(curPt));
                         for(int i=0; i<connexity.getNbPoints(); i++) {
                             Point<TCoord> q=curPt+connexity.getPoint(i);
@@ -767,13 +689,13 @@ vector<GraphNode<T> *> CGraph<T>::computeComponents(OrderedQueue <RGB> &pq)
 * -compute inclusion relations/ construct links
 * -compute the transitive reduction
 **/
-template <>
-int CGraph<RGB>::computeGraphFull()
+template <class T, class U>
+int CGraph<T,U>::computeGraphFull()
 {
     Image <RGB> im=this->imSource;
     OrderedQueue <RGB> pq;
 
-    vector<GraphNode<RGB> *> nodes;
+    vector<GraphNode<RGB,U> *> nodes;
 
     vector <RGB> colorProcessed;
 

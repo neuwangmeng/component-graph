@@ -24,42 +24,32 @@ using namespace LibTIM;
 using namespace std;
 
 
-enum class GraphAttributes {
-    Area,
-    Contrast,
-    Volume,
-    Compacity
-};
 
 /** Component-graph storage and computation **/
 
-template <class T> class CGraph
+template <class T, class U> class CGraph
 {
 private:
     RAGraph<T> *rag; /*!< Region adjacency graph on which is computed the component-graph */
-    Image<T> imSource; /*! Source image (2D or 3D) */
+    Image<T> imSource; /*!< Source image (2D or 3D) */
     FlatSE connexity;   /*!< Underlying connexity (2D: 4- 8-  or 3D : 6- 18- 26-) */
-    Ordering <T> *order; /*!<Ordering used for type T */
+    Ordering <T> *order; /*!< Ordering used for type T */
 
     /** Track computation progress **/
     CGraphWatcher *graphWatcher;
     /** Container of the nodes of the (directed) graph **/
-    std::vector<GraphNode<T> *> graph;
-    /** Attributes of the nodes **/
-    std::map<GraphAttributes,std::vector<int> > attributes;
+    std::vector<GraphNode<T,U> *> graph;
+
     /** Root of the graph **/
-    GraphNode<T> *root;
+    GraphNode<T,U> *root;
 
 public:
 
-    CGraph(Image <RGB> &imSource, FlatSE &connexity, std::vector<GraphAttributes> &listOfAttributes, Ordering<T> *order) : graphWatcher() {
+    CGraph(Image <RGB> &imSource, FlatSE &connexity,  Ordering<T> *order) : graphWatcher() {
         this->imSource=imSource;
         this->connexity=connexity;
         this->rag=new RAGraph<T>(imSource,connexity);
-        for(int i=0; i<listOfAttributes.size(); i++) {
-            std::vector<int> v;
-            this->attributes[listOfAttributes[i]]=v;
-        }
+
         this->order=order;
     }
 
@@ -88,20 +78,20 @@ public:
     Image<RGB> constructImage();
 
     /** Helper functions **/
-    vector<GraphNode<T> *> computeComponents(OrderedQueue<RGB> &pq);
+    vector<GraphNode<T,U> *> computeComponents(OrderedQueue<RGB> &pq);
     static bool notComparable(Image<T> &im, Point<TCoord> &p, Point<TCoord> &q);
 
-    bool isEqual(GraphNode<T> *n, GraphNode<T> *m);
-    bool isIncluded(GraphNode<T> *n, GraphNode<T> *m);
-    bool isIncludedFast(GraphNode<T> *n, GraphNode<T> *m, vector<bool> &tmp);
-    void computeLinks(vector<GraphNode<T> *> &nodes);
-    GraphNode<T> *addRoot(vector<GraphNode<T> *> &nodes);
-    vector<GraphNode<T> *> minimalElements(vector<GraphNode<T> *> &nodes, vector<bool> &tmp);
-    void computeTransitiveReduction( vector<GraphNode<T> *> &nodes);
+    bool isEqual(GraphNode<T,U> *n, GraphNode<T,U> *m);
+    bool isIncluded(GraphNode<T,U> *n, GraphNode<T,U> *m);
+    bool isIncludedFast(GraphNode<T,U> *n, GraphNode<T,U> *m, vector<bool> &tmp);
+    void computeLinks(vector<GraphNode<T,U> *> &nodes);
+    GraphNode<T,U> *addRoot(vector<GraphNode<T,U> *> &nodes);
+    vector<GraphNode<T,U> *> minimalElements(vector<GraphNode<T,U> *> &nodes, vector<bool> &tmp);
+    void computeTransitiveReduction( vector<GraphNode<T,U> *> &nodes);
 
     Image<RGB> constructImageInf();
     void areaFiltering(int areaMin, int areaMax);
-    bool isLTE(T &v, T &w);
+    bool isLTE(RGB &v, RGB &w);
 
     void contrastFiltering(int contrastMin);
     void contrastFiltering(int contrastMin, int contrastMax);
@@ -111,17 +101,18 @@ public:
     void adaptiveAreaFiltering(int p);
     void adaptiveContrastFiltering(int p);
 
-    bool isIncluded(GraphNode<T> *n, GraphNode<T> *m, vector<bool> &tmp);
+    bool isIncluded(GraphNode<T,U> *n, GraphNode<T,U> *m, vector<bool> &tmp);
 private:
-    void paintNode(Image<RGB> &im, GraphNode<T> *n, RGB &value);
-    void paintNodeSup(Image<RGB> &imRes, GraphNode<T> *n, RGB &value);
+    void paintNode(Image<RGB> &im, GraphNode<RGB,U> *n, RGB &value);
+    void paintNodeSup(Image<RGB> &imRes, GraphNode<RGB,U> *n, RGB &value);
 
-    vector<GraphNode<T> *> computeComponents(Image<RGB> &im, FlatSE &connexity);
+    vector<GraphNode<T,U> *> computeComponents(Image<RGB> &im, FlatSE &connexity);
 
-    int getArea(GraphNode <T> *node) {return attributes[GraphAttributes::Area][node->id];}
-    int getContrast(GraphNode <T> *node) {return attributes[GraphAttributes::Contrast][node->id];}
-    int getVolume(GraphNode <T> *node) {return attributes[GraphAttributes::Volume][node->id];}
-    int getCompacity(GraphNode <T> *node) {return attributes[GraphAttributes::Compacity][node->id];}
+    int getArea(GraphNode <T,U> *node) {return node->getPixels().size();}
+//    int getContrast(GraphNode <T> *node) {return attributes[GraphAttributes::Contrast][node->id];}
+//    int getVolume(GraphNode <T> *node) {return attributes[GraphAttributes::Volume][node->id];}
+//    int getCompacity(GraphNode <T> *node) {return attributes[GraphAttributes::Compacity][node->id];}
+//    void updateAttributes(GraphNode<T> *node, int regionIndex);
 };
 
 #include "cgraph.hxx"
