@@ -98,7 +98,7 @@ public :
     }
 
     int getSize() {return nodes.size();}
-    T getValue(int i) {return nodes[i]->value;}
+    const T &getValue(int i) {return nodes[i]->value;}
     const std::vector<Point<TCoord> > &getPixels(int i) {return nodes[i]->pixels;}
     int getIndex(int i) {return nodes[i]->index; }
     const std::vector<int> &getAllNb(int i) {return nodes[i]->allNb;}

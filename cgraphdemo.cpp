@@ -42,16 +42,41 @@ public:
         area=0;
         volume=0;
         contrast=0;
+        RGB value(0,0,0);
+        valueMax=0;
         compacity=0;
     };
 
-    void update(const std::vector< Point <TCoord > > &pixels) {
+    void updateArea(const std::vector<Point <TCoord > > &pixels) {
         this->area+=pixels.size();
+    }
+
+    void updateContrast(const RGB &v) {
+        this->valueMax=std::max(this->valueMax,v[0]+v[1]+v[2]);
+        this->contrast=this->valueMax-(this->value[0]+this->value[1]+this->value[2]);
+    }
+
+    void update(const std::vector< Point <TCoord > > &pixels, const RGB &value) {
+        updateArea(pixels);
+        updateContrast(value);
     };
 
+    std::string writeDot() {
+        std::stringstream s;
+        s << "a=" << area << "," <<
+             "c=" << contrast ;
+        return s.str();
+    }
+
+    void setValue(RGB &value) {
+        this->value=value;
+    }
+
+    RGB value;
     int area;
     int volume;
     int contrast;
+    int valueMax;
     int compacity;
 };
 
@@ -67,14 +92,12 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    // Declaration of:
-    // - imSrc (source image)
+    // Declaration of imSrc (source image)
 
     Image <RGB> imSrc;
 
     // Declaration of :
-    // -connexity: 26-adjacency
-    // compatible with 2D (8-connexity) and 3D images
+    // -connexity: 8-adjacency
     FlatSE connexity;
     connexity.make2DN8();
 
@@ -83,10 +106,6 @@ int main(int argc, char *argv[])
 
     int areaMin=atoi(argv[2]);
     int contrastMin=atoi(argv[3]);
-
-//    std::vector<GraphAttributes> attributes;
-//    attributes.push_back(GraphAttributes::Area);
-//    attributes.push_back(GraphAttributes::Contrast);
 
     ColorMarginalOrdering  *order=new ColorMarginalOrdering();
 

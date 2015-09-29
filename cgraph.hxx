@@ -49,10 +49,8 @@ int CGraph<T,U>::computeGraph() {
             /** i is a canonical region (i==regionToNode[i]->index) */
             GraphNode<T,U> *curNode=new GraphNode<T,U>(rag->getIndex(i) ,rag->getValue(i));
             // add region pixels to curNode
-            curNode->updateAttributes(this->rag->getPixels(i));
+            curNode->updateAttributes(this->rag->getPixels(i), this->rag->getValue(i));
             regionToNode[i]=curNode;
-
-           // int valueMax=curNode->color[0]+curNode->color[1]+curNode->color[2];
 
             potentialChilds.clear();
 
@@ -74,8 +72,7 @@ int CGraph<T,U>::computeGraph() {
                     if(!infifo[nb] && order->islessequal(value1,value2)) {
 
                         if(order->isequal(value1, value2)) {
-                            /** flat-zone which belongs to the same node: merge pixels*/
-                            curNode->updateAttributes(this->rag->getPixels(nb));
+                            /** flat-zone which belongs to the same node*/
                             regionToNode[nb]=curNode;
                         }
                         else {
@@ -84,8 +81,6 @@ int CGraph<T,U>::computeGraph() {
                              *   a is not a direct child of curNode
                              */
                             GraphNode<T,U> *tmp=regionToNode[nb];
-
-                            //valueMax=std::max(valueMax,tmp->color[0]+tmp->color[1]+tmp->color[2]);
 
                             assert(tmp!=0);
                             bool isChild=true;
@@ -100,8 +95,9 @@ int CGraph<T,U>::computeGraph() {
                                 tmp->fathers.push_back(curNode);
                             }
                         }
-                        //curNode->area+=rag->nodes[nb]->pixels.size();
-                        //curNode->contrast=valueMax-(curNode->color[0]+curNode->color[1]+curNode->color[2]);
+                        // add pixels to node and update attributes
+                        curNode->updateAttributes(this->rag->getPixels(nb),this->rag->getValue(nb));
+
                         fifo.push(nb);
                         infifo[nb]=true;
                     }
@@ -462,8 +458,8 @@ int CGraph<T,U>::writeDot(const char *filename)
             nodeName.str("");
             nodeName << "\"" << tmp->id << ":(" <<(int)tmp->value[0] << "," <<
                         (int)tmp->value[1]<<","<<
-                        (int)tmp->value[2]<<
-                        /*" a=" << attributes[GraphAttributes::Area][tmp->id] << */
+                        (int)tmp->value[2]<< " " <<
+                        tmp->attributes.writeDot() <<
                         ")\"";
             if(!tmp->active)
                 file << "\t" << nodeName.str() << "[style=filled, fillcolor=grey];\n";
@@ -473,8 +469,8 @@ int CGraph<T,U>::writeDot(const char *filename)
                 std::stringstream nodeNameChild;
                 nodeNameChild << "\"" << tmp->childs[i]->id << ":(" <<(int)tmp->childs[i]->value[0] << "," <<
                                  (int)tmp->childs[i]->value[1]<<","<<
-                                 (int)tmp->childs[i]->value[2]<<
-                                /* " a=" << attributes[GraphAttributes::Area][tmp->childs[i]->id] << */
+                                 (int)tmp->childs[i]->value[2]<< " "<<
+                                tmp->childs[i]->attributes.writeDot() <<
                                 ")\"";
 
                 file << "\t" <<

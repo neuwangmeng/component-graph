@@ -22,18 +22,19 @@ public:
     std::vector<GraphNode *> fathers; /// list of direct ascendants
     std::vector<Point<TCoord> > pixels; /// list of pixels offsets belonging to the node
     GraphAttributes<U> attributes;
-    void updateAttributes(const std::vector<Point<TCoord> > &pixels) {
+    void updateAttributes(const std::vector<Point<TCoord> > &pixels, const T &value) {
         // insert pixels in node
         this->pixels.insert(this->pixels.end(), pixels.begin(), pixels.end());
         // update node attributes
-        attributes.update(this, pixels);
+        attributes.update(this, pixels,value);
     }
 
     GraphNode(int id, T value) {
         this->id=id;
         this->value=value;
         this->modifiedValue=value;
-        active=true;
+        this->active=true;
+        this->attributes.setValue(value);
     }
     void addChild(GraphNode *child) {
         this->childs.push_back(child);
