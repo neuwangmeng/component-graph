@@ -119,18 +119,18 @@ int main(int argc, char *argv[])
     cgraph->computeGraph();
 
     // Area and contrast filtering
-    //cgraph->areaFiltering(areaMin);
-    //cgraph->contrastFiltering(contrastMin);
+    cgraph->areaFiltering(areaMin);
+    cgraph->contrastFiltering(contrastMin);
 
     // Write graph in dot format
     // Filtered nodes are shown in gray
     cgraph->writeDot("cgraph.dot");
 
     // Compute resulting image
-    //Image<RGB> result=cgraph->constructImage();
+    Image<RGB> result=cgraph->constructImage();
     // Save result in ppm format
-    //result.save("result.ppm");
+    result.save("result.ppm");
 
-    //delete cgraph;
+    delete cgraph;
 }
 

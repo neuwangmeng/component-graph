@@ -109,7 +109,7 @@ private:
     vector<GraphNode<T,U> *> computeComponents(Image<RGB> &im, FlatSE &connexity);
 
     int getArea(GraphNode <T,U> *node) {return node->getPixels().size();}
-//    int getContrast(GraphNode <T> *node) {return attributes[GraphAttributes::Contrast][node->id];}
+    int getContrast(GraphNode <T> *node) {return attributes[GraphAttributes::Contrast][node->id];}
 //    int getVolume(GraphNode <T> *node) {return attributes[GraphAttributes::Volume][node->id];}
 //    int getCompacity(GraphNode <T> *node) {return attributes[GraphAttributes::Compacity][node->id];}
 //    void updateAttributes(GraphNode<T> *node, int regionIndex);
