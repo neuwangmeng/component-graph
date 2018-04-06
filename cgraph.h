@@ -24,7 +24,6 @@ using namespace LibTIM;
 using namespace std;
 
 
-
 /** Component-graph storage and computation **/
 
 template <class T, class U> class CGraph
@@ -113,6 +112,7 @@ private:
 //    int getVolume(GraphNode <T> *node) {return attributes[GraphAttributes::Volume][node->id];}
 //    int getCompacity(GraphNode <T> *node) {return attributes[GraphAttributes::Compacity][node->id];}
 //    void updateAttributes(GraphNode<T> *node, int regionIndex);
+
 };
 
 #include "cgraph.hxx"
